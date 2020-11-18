@@ -103,7 +103,7 @@ export default function Join() {
         justify="center"
         style={{ marginTop: '50px' }}
       >
-        {rooms ? (
+        {rooms.length === 0 ? (
           <Typography variant="body1">Aucune salle d'écoute trouvée</Typography>
         ) : (
           roomList()
