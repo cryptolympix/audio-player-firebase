@@ -92,6 +92,9 @@ export default function Room() {
   const [audio, setAudio] = useState<HTMLAudioElement>(new Audio());
   const [time, setTime] = useState(0);
 
+  /**
+   * Disconnect the user when he exiting the page
+   */
   useEffect(() => {
     // When reloading or exiting the page
     window.addEventListener('beforeunload', (event) => {
@@ -103,8 +106,9 @@ export default function Room() {
     });
   }, [activeUsers, roomId, username]);
 
-  useEffect(() => {}, [activeUsers, roomId, username]);
-
+  /**
+   * Load the data of the room
+   */
   useEffect(() => {
     firebase
       .firestore()
@@ -135,6 +139,9 @@ export default function Room() {
       });
   }, [roomId, history, isAdmin, location.state?.fromCreate]);
 
+  /**
+   * Synchronize the active users in the room
+   */
   useEffect(() => {
     firebase
       .database()
@@ -145,6 +152,9 @@ export default function Room() {
       });
   }, [roomId]);
 
+  /**
+   * Synchronize the audio source
+   */
   useEffect(() => {
     firebase
       .database()
@@ -169,6 +179,9 @@ export default function Room() {
       });
   }, [roomId, isAdmin, audio]);
 
+  /**
+   * Synchronize the state of the audio (playing or not)
+   */
   useEffect(() => {
     if (isAdmin || !synchronized) return;
     firebase
@@ -190,6 +203,9 @@ export default function Room() {
       });
   }, [roomId, isAdmin, audio, synchronized]);
 
+  /**
+   * Synchronized the audio time
+   */
   useEffect(() => {
     if (isAdmin || !synchronized) return;
     firebase
@@ -201,7 +217,11 @@ export default function Room() {
       });
   }, [roomId, isAdmin, audio, synchronized]);
 
-  function onStateChange(state: string) {
+  /**
+   * Update the state of the audio
+   * @param state
+   */
+  function onStateChange(state: 'play' | 'pause') {
     if (synchronized) {
       firebase
         .database()
@@ -218,6 +238,7 @@ export default function Room() {
     }
   }
 
+  // Set the audio instance of AudioPlayer to the state and update the current time
   function onListen(event: any) {
     if (!audio) {
       const newAudio = event.target;
@@ -236,6 +257,10 @@ export default function Room() {
     }
   }
 
+  /**
+   * When a user enter in the room, he must choose a username to be identified in the room
+   * @param event
+   */
   function chooseUsername(event: FormEvent) {
     event.preventDefault();
 
@@ -251,9 +276,16 @@ export default function Room() {
         .set(activeUsers.concat(username))
         .then(() => {
           if (activeUsers.length < size) {
-            setUsername(username);
-            setUsernameSaved(true);
-            setLoaded(true);
+            if (!activeUsers.includes(username)) {
+              setUsername(username);
+              setUsernameSaved(true);
+              setLoaded(true);
+            } else {
+              setAlert({
+                msg: "Ce nom d'utilisateur est déjà utilisé",
+                severity: 'warning',
+              });
+            }
           } else {
             setAlert({
               msg: 'La salle est pleine, vous ne pouvez plus rentrer...',
@@ -267,11 +299,23 @@ export default function Room() {
     }
   }
 
-  function handleCloseAlert(event?: React.SyntheticEvent, reason?: string) {
-    if (reason === 'clickaway') return;
-    setAlert(null);
+  /**
+   * Skip the current to go to the previous track (-1), or the next track (1)
+   * @param a -1 or 1
+   */
+  function skipTrack(a: number) {
+    if (activeTrack) {
+      let index = tracks.indexOf(activeTrack);
+      if (index > -1) {
+        const next = tracks[Math.abs((index + a) % tracks.length)];
+        setActiveTrack(next);
+      }
+    }
   }
 
+  /**
+   * Delethe the room in the database and redirect to home page
+   */
   function closeRoom() {
     if (isAdmin) {
       firebase
@@ -288,6 +332,11 @@ export default function Room() {
         .catch(console.error);
       history.push('/');
     }
+  }
+
+  function handleCloseAlert(event?: React.SyntheticEvent, reason?: string) {
+    if (reason === 'clickaway') return;
+    setAlert(null);
   }
 
   if (!loaded) {
@@ -437,6 +486,8 @@ export default function Room() {
             onPlay={() => onStateChange('play')}
             onPause={() => onStateChange('pause')}
             onListen={onListen}
+            onClickNext={() => skipTrack(1)}
+            onClickPrevious={() => skipTrack(-1)}
           />
         </Grid>
 
