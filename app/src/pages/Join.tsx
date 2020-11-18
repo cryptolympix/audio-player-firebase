@@ -57,6 +57,33 @@ export default function Join() {
     setRooms(rooms.filter((room) => room.id !== 'test'));
   }
 
+  const roomList = () =>
+    rooms.map((room, i) => (
+      <Card key={`room-${i}`} className={classes.card}>
+        <CardContent>
+          <Typography
+            variant="h5"
+            gutterBottom
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            {room.name}
+          </Typography>
+          <Typography variant="body1">
+            créée par <b>{room.admin}</b>
+          </Typography>
+        </CardContent>
+        <CardActions style={{ display: 'flex', justifyContent: 'center' }}>
+          <Button variant="contained" color="primary" href={room.url}>
+            <Typography variant="button">Rejoindre</Typography>
+          </Button>
+        </CardActions>
+      </Card>
+    ));
+
   return (
     <Grid container direction="column" justify="center">
       <Grid item>
@@ -70,31 +97,11 @@ export default function Join() {
         justify="center"
         style={{ marginTop: '50px' }}
       >
-        {rooms.map((room, i) => (
-          <Card key={`room-${i}`} className={classes.card}>
-            <CardContent>
-              <Typography
-                variant="h5"
-                gutterBottom
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                {room.name}
-              </Typography>
-              <Typography variant="body1">
-                créée par <b>{room.admin}</b>
-              </Typography>
-            </CardContent>
-            <CardActions style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button variant="contained" color="primary" href={room.url}>
-                <Typography variant="button">Rejoindre</Typography>
-              </Button>
-            </CardActions>
-          </Card>
-        ))}
+        {rooms ? (
+          <Typography variant="body1">Aucune salle d'écoute trouvée</Typography>
+        ) : (
+          roomList()
+        )}
       </Grid>
     </Grid>
   );
