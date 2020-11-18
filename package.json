@@ -1,0 +1,15 @@
+{
+  "name": "music-player-sync-firebase",
+  "version": "1.0.0",
+  "description": "An audio player synchronized",
+  "scripts": {
+    "build:app": "cd app && npm run build",
+    "build:func": "cd functions && npm run build"
+  },
+  "keywords": [],
+  "author": "mxjoly <maxime.joly2808@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "firebase-tools": "^8.16.2"
+  }
+}
