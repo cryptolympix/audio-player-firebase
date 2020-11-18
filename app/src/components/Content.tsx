@@ -11,12 +11,11 @@ const Home = React.lazy(() => import('../pages/Home'));
 const Create = React.lazy(() => import('../pages/Create'));
 const Join = React.lazy(() => import('../pages/Join'));
 const Room = React.lazy(() => import('../pages/Room'));
-const About = React.lazy(() => import('../pages/About'));
 
 function Content() {
   return (
     <Container
-      style={{ padding: '5vh 5vw', marginBottom: '-60px' }}
+      style={{ padding: '5vh 5vw calc(5vh + 60px)' }}
       maxWidth={'lg'}
       disableGutters
     >
@@ -33,9 +32,6 @@ function Content() {
           </Route>
           <Route path="/rooms/:roomId" exact>
             <Room />
-          </Route>
-          <Route path="/about" exact>
-            <About />
           </Route>
           <Route path="/">
             <Redirect to="/" />

@@ -40,7 +40,7 @@ const palette: any = {
   },
   background: {
     default: '#fff',
-    paper: '#fff',
+    paper: 'rgb(250,250,250)',
   },
   text: {
     primary: colors.common.black,

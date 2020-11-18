@@ -63,11 +63,6 @@ function MobileNavigation() {
                   <Typography variant="button">Rejoindre</Typography>
                 </Link>
               </Grid>
-              <Grid item>
-                <Link href="/about" underline="none">
-                  <Typography variant="button">À propos</Typography>
-                </Link>
-              </Grid>
             </Grid>
           </Toolbar>
         </AppBar>

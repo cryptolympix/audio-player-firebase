@@ -1,17 +1,22 @@
 {
   "name": "music-player-sync-firebase",
   "version": "1.0.0",
-  "description": "An audio player synchronized",
-  "scripts": {
-    "build:app": "cd app && npm run build",
-    "build:func": "cd functions && npm run build",
-    "deploy:hosting": "npm run build:app && firebase deploy --only hosting",
-    "deploy:functions": "npm run build:func && firebase deploy --only functions"
-  },
-  "keywords": [],
+  "description": "An audio player to synchronize audio with many devices",
   "author": "mxjoly <maxime.joly2808@gmail.com>",
   "license": "MIT",
+  "keywords": [],
+  "scripts": {
+    "start": "cd app && yarn-or-npm run start",
+    "install": "yarn-or-npm run install:app && yarn-or-npm run install:func",
+    "install:app": "cd app && yarn-or-npm install",
+    "install:func": "cd functions && yarn-or-npm install",
+    "build:app": "cd app && yarn-or-npm run build",
+    "build:func": "cd functions && yarn-or-npm run build",
+    "deploy:hosting": "yarn-or-npm run build:app && firebase deploy --only hosting",
+    "deploy:functions": "yarn-or-npm run build:func && firebase deploy --only functions"
+  },
   "devDependencies": {
-    "firebase-tools": "^8.16.2"
+    "firebase-tools": "^8.16.2",
+    "yarn-or-npm": "^3.0.1"
   }
 }

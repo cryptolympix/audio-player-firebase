@@ -101,9 +101,13 @@ export default function Room() {
     window.addEventListener('beforeunload', () => {
       firebase
         .database()
-        .ref(`rooms/${roomId}`)
-        .child('users')
-        .set(activeUsers.filter((user) => user !== username))
+        .ref(`rooms/${roomId}/users`)
+        .transaction(async (users) => {
+          await Object.entries(users).forEach(([key, value]) => {
+            if (value === username) delete users[key];
+          });
+          return users;
+        })
         .catch(console.error);
     });
   }, [activeUsers, roomId, username, admin, isAdmin]);
@@ -128,22 +132,30 @@ export default function Room() {
             if (isAdmin && location.state?.fromCreate) {
               setUsername(data.admin);
               setUsernameSaved(true);
+              setLoaded(true);
+            } else if (isAdmin) {
+              firebase
+                .database()
+                .ref(`rooms/${roomId}/users`)
+                .transaction((users) => {
+                  if (users && !Object.values(users).includes(data.admin)) {
+                    users.push(data.admin);
+                  }
+                  return users;
+                })
+                .then(() => {
+                  setLoaded(true);
+                })
+                .catch(console.error);
             }
-            return data;
           }
         } else {
-          throw new Error("The room desn' exist");
+          throw new Error("The room doesn't exist");
         }
       })
       .then((data) => {
-        firebase
-          .database()
-          .ref(`rooms/${roomId}/users`)
-          .set(activeUsers.concat(data?.admin))
-          .then(() => {
-            setLoaded(true);
-          })
-          .catch(console.error);
+        if (isAdmin && data) {
+        }
       })
       .catch((err) => {
         console.error(err.message);
@@ -158,11 +170,11 @@ export default function Room() {
   useEffect(() => {
     firebase
       .database()
-      .ref(`rooms/${roomId}`)
-      .child('users')
+      .ref(`rooms/${roomId}/users`)
       .on('value', (snap) => {
-        setActiveUsers(snap.val() || []);
+        setActiveUsers(Object.values(snap.val() || []));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   /**
@@ -171,21 +183,26 @@ export default function Room() {
   useEffect(() => {
     firebase
       .database()
-      .ref(`rooms/${roomId}`)
-      .child('currentTrack')
+      .ref(`rooms/${roomId}/currentTrack`)
       .on('value', (snap) => {
         if (snap.exists()) {
           const data = snap.val();
-          setActiveTrack({
-            composer: data.composer,
-            title: data.title,
-            ref: data.ref,
-            url: data.url,
-          });
+          const track = tracks.find((track) => track.ref === activeTrack?.ref);
+          if (track) {
+            setActiveTrack(track);
+          } else {
+            setActiveTrack({
+              composer: data.composer,
+              ref: data.ref,
+              title: data.title,
+              url: data.url,
+            });
+          }
           audio.src = data.url;
         }
       });
-  }, [roomId, isAdmin, audio]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, isAdmin, audio, tracks]);
 
   /**
    * Synchronize the state of the audio (playing or not)
@@ -194,8 +211,7 @@ export default function Room() {
     if (isAdmin || !synchronized) return;
     firebase
       .database()
-      .ref(`rooms/${roomId}`)
-      .child('state')
+      .ref(`rooms/${roomId}/state`)
       .on('value', (snapshot) => {
         switch (snapshot.val()) {
           case 'play':
@@ -218,8 +234,7 @@ export default function Room() {
     if (isAdmin || !synchronized) return;
     firebase
       .database()
-      .ref(`rooms/${roomId}`)
-      .child('time')
+      .ref(`rooms/${roomId}/time`)
       .on('value', (snapshot) => {
         audio.currentTime = snapshot.val();
       });
@@ -234,14 +249,12 @@ export default function Room() {
       firebase
         .database()
         .ref(`rooms/${roomId}`)
-        .child('state')
-        .set(state)
+        .update({ state })
         .catch(console.error);
       firebase
         .database()
         .ref(`rooms/${roomId}`)
-        .child('time')
-        .set(time)
+        .update({ time })
         .catch(console.error);
     }
   }
@@ -259,7 +272,9 @@ export default function Room() {
     setSynchronized(!synchronized);
     if (isMobile) {
       setAlert({
-        msg: synchronized ? `Tu n'est plus synchronisé` : `Tu es synchronisé`,
+        msg: synchronized
+          ? `Synchronisation désactivée`
+          : `Synchronisation activée`,
         severity: synchronized ? 'warning' : 'success',
       });
     }
@@ -281,9 +296,8 @@ export default function Room() {
         if (!activeUsers.includes(username)) {
           firebase
             .database()
-            .ref(`rooms/${roomId}`)
-            .child('users')
-            .set(activeUsers.concat(username))
+            .ref(`rooms/${roomId}/users`)
+            .push(username)
             .then(() => {
               setUsername(username);
               setUsernameSaved(true);
@@ -313,15 +327,13 @@ export default function Room() {
    */
   function skipTrack(a: number) {
     if (activeTrack) {
-      let index = tracks.findIndex((track) => (track.ref = activeTrack.ref));
-      console.log(index);
+      let index = tracks.findIndex((track) => track.ref === activeTrack.ref);
       if (index > -1) {
         const next = tracks[Math.abs((index + a) % tracks.length)];
         firebase
           .database()
           .ref(`rooms/${roomId}`)
-          .child('currentTrack')
-          .set(next)
+          .update({ currentTrack: next })
           .then(() => {
             setActiveTrack(next);
           })
@@ -335,8 +347,7 @@ export default function Room() {
       firebase
         .database()
         .ref(`rooms/${roomId}`)
-        .child('currentTrack')
-        .set(track)
+        .update({ currentTrack: track })
         .then(() => {
           if (track !== activeTrack) {
             setActiveTrack(track);
@@ -351,12 +362,7 @@ export default function Room() {
    */
   function closeRoom() {
     if (isAdmin) {
-      firebase
-        .database()
-        .ref('rooms')
-        .child(roomId)
-        .remove()
-        .catch(console.error);
+      firebase.database().ref(`rooms/${roomId}`).remove().catch(console.error);
       firebase
         .firestore()
         .collection('rooms')
@@ -372,7 +378,7 @@ export default function Room() {
     setAlert(null);
   }
 
-  if (!loaded) {
+  if (!loaded && isAdmin) {
     return <div />;
   }
 

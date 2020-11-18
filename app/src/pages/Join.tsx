@@ -18,15 +18,13 @@ interface Room {
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    card: {
-      backgroundColor: '#efefef',
-      width: '300px',
+    cardContainer: {
+      display: 'grid',
+      gridGap: '1rem',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      with: '800px',
       maxWidth: '90vw',
-      marginRight: 'auto',
-      marginLeft: 'auto',
-      '&:not(:first-child)': {
-        marginTop: '40px',
-      },
+      margin: 'auto',
     },
   })
 );
@@ -61,7 +59,7 @@ export default function Join() {
 
   const roomList = () =>
     rooms.map((room, i) => (
-      <Card key={`room-${i}`} className={classes.card}>
+      <Card key={`room-${i}`}>
         <CardContent>
           <Typography
             variant="h5"
@@ -79,7 +77,11 @@ export default function Join() {
           </Typography>
         </CardContent>
         <CardActions style={{ display: 'flex', justifyContent: 'center' }}>
-          <Button variant="contained" color="primary" href={room.url}>
+          <Button
+            variant="contained"
+            color="primary"
+            href={`/rooms/${room.id}`}
+          >
             <Typography variant="button">Rejoindre</Typography>
           </Button>
         </CardActions>
@@ -102,6 +104,7 @@ export default function Join() {
         direction="column"
         justify="center"
         style={{ marginTop: '50px' }}
+        className={classes.cardContainer}
       >
         {rooms.length === 0 ? (
           <Typography variant="body1">Aucune salle d'écoute trouvée</Typography>

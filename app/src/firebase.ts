@@ -9,13 +9,13 @@ import 'firebase/database';
 import 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyAm-ih6CxPbquOMTj6STZkvPOZSdxcO_-o',
-  authDomain: 'audio-player-sync.firebaseapp.com',
-  databaseURL: 'https://audio-player-sync.firebaseio.com',
-  projectId: 'audio-player-sync',
-  storageBucket: 'audio-player-sync.appspot.com',
-  messagingSenderId: '513335075455',
-  appId: '1:513335075455:web:644fef4500e272af76554a',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: `${process.env.REACT_APP_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  databaseURL: `https://${process.env.REACT_APP_FIREBASE_PROJECT_ID}.firebaseio.com`,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: `${process.env.REACT_APP_FIREBASE_PROJECT_ID}.appspot.com`,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
 firebase.initializeApp(firebaseConfig);

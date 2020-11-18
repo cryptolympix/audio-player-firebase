@@ -5,9 +5,9 @@ import {
   Theme,
   useTheme,
 } from '@material-ui/core/styles';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { v1 as uuidv1 } from 'uuid';
 import { useHistory } from 'react-router-dom';
+import crypto from 'crypto';
 import firebase from '../firebase';
 
 import Grid from '@material-ui/core/Grid';
@@ -33,12 +33,12 @@ interface Track {
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    root: {},
     item: {
       margin: 'auto',
     },
     form: {
       maxWidth: theme.spacing(120),
-      padding: theme.spacing(5),
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -72,7 +72,6 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function Create() {
   const classes = useStyles();
-  const matches = useMediaQuery('(max-width:600px)');
   const theme = useTheme();
   const history = useHistory();
 
@@ -117,15 +116,21 @@ export default function Create() {
                           .ref(ref)
                           .getDownloadURL()
                           .then((url) => {
+                            // Format the name of the audio to be a title
+                            let formatTitle = item.name.replaceAll('_', ' ');
+                            const index = item.name.lastIndexOf('.');
+                            if (index > -1) {
+                              formatTitle = formatTitle.slice(0, index);
+                            }
                             tracks.push({
-                              title: item.name,
+                              title: formatTitle,
                               composer: folder.name || 'Unknown',
                               url,
                               ref,
                             });
                             resolve();
                           })
-                          .catch((err) => resolve(err));
+                          .catch(reject);
                       })
                     );
                   });
@@ -193,7 +198,10 @@ export default function Create() {
             .ref(`rooms/${roomID}`)
             .set({
               currentTrack: selectedTracks[0],
-              users: [roomAdmin],
+              users: {
+                ['-' +
+                crypto.randomBytes(20).toString('hex').slice(0, 18)]: roomAdmin,
+              },
               state: 'pause',
               time: 0,
             })
@@ -217,10 +225,6 @@ export default function Create() {
     const track = storageTracks.find((t) => t.ref === ref);
     if (track) {
       if (event.target.checked) {
-        let formatTitle = track.title.replaceAll('_', ' ');
-        const index = formatTitle.lastIndexOf('.');
-        formatTitle = formatTitle.slice(0, index); // remove the extension
-        track.title = formatTitle;
         setSelectedTracks(selectedTracks.concat(track));
       } else {
         setSelectedTracks(selectedTracks.filter((t) => t.ref !== track.ref));
@@ -241,19 +245,30 @@ export default function Create() {
 
   return (
     <ClickAwayListener onClickAway={clearErrors}>
-      <Grid container direction="column" justify="center" alignItems="center">
+      <Grid
+        container
+        direction="column"
+        justify="center"
+        alignItems="center"
+        className={classes.root}
+      >
         <Grid item className={classes.item}>
           <Paper
             style={{
-              padding: theme.spacing(matches ? 0 : 8),
+              padding: theme.spacing(8),
               transition: 'none',
             }}
-            elevation={matches ? 0 : 3}
+            elevation={3}
           >
             <Typography variant="h3" component="h1">
               Créer une salle d'écoute
             </Typography>
-            <form className={classes.form} onSubmit={createRoom} noValidate>
+            <form
+              className={classes.form}
+              onSubmit={createRoom}
+              onClick={clearErrors}
+              noValidate
+            >
               <FormControl component="fieldset" fullWidth>
                 <TextField
                   className={classes.textfield}
@@ -313,12 +328,11 @@ export default function Create() {
                   <FormGroup className={classes.list}>
                     {storageTracks
                       .map((track) => {
-                        const formatTitle = track.title.replaceAll('_', ' ');
-                        const label = `${track.composer} - ${formatTitle}`;
+                        const label = `${track.composer} - ${track.title}`;
                         return {
                           label,
-                          formatTitle,
-                          ref: `audio/${track.composer}/${track.title}`,
+                          title: track.title,
+                          ref: track.ref,
                           url: track.url,
                         };
                       })
