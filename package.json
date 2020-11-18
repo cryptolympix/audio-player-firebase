@@ -4,7 +4,9 @@
   "description": "An audio player synchronized",
   "scripts": {
     "build:app": "cd app && npm run build",
-    "build:func": "cd functions && npm run build"
+    "build:func": "cd functions && npm run build",
+    "deploy:hosting": "npm run build:app && firebase deploy --only hosting",
+    "deploy:functions": "npm run build:func && firebase deploy --only functions"
   },
   "keywords": [],
   "author": "mxjoly <maxime.joly2808@gmail.com>",
