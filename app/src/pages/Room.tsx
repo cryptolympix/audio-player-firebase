@@ -277,31 +277,31 @@ export default function Room() {
         /[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+/
       )
     ) {
-      firebase
-        .database()
-        .ref(`rooms/${roomId}`)
-        .child('users')
-        .set(activeUsers.concat(username))
-        .then(() => {
-          if (activeUsers.length < size) {
-            if (!activeUsers.includes(username)) {
+      if (activeUsers.length < size) {
+        if (!activeUsers.includes(username)) {
+          firebase
+            .database()
+            .ref(`rooms/${roomId}`)
+            .child('users')
+            .set(activeUsers.concat(username))
+            .then(() => {
               setUsername(username);
               setUsernameSaved(true);
               setLoaded(true);
-            } else {
-              setAlert({
-                msg: "Ce nom d'utilisateur est déjà utilisé",
-                severity: 'warning',
-              });
-            }
-          } else {
-            setAlert({
-              msg: 'La salle est pleine, vous ne pouvez plus rentrer...',
-              severity: 'warning',
-            });
-          }
-        })
-        .catch(console.error);
+            })
+            .catch(console.error);
+        } else {
+          setAlert({
+            msg: "Ce nom d'utilisateur est déjà utilisé",
+            severity: 'warning',
+          });
+        }
+      } else {
+        setAlert({
+          msg: 'La salle est pleine, vous ne pouvez plus rentrer...',
+          severity: 'warning',
+        });
+      }
     } else {
       setUsernameError(true);
     }
