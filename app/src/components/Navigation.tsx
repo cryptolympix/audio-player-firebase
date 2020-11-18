@@ -22,7 +22,7 @@ import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     topNavigation: {
-      position: 'relative',
+      position: 'fixed',
       width: '100%',
       backgroundColor: theme.palette.primary.dark,
       zIndex: 20,

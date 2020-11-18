@@ -5,6 +5,7 @@ import {
   Route,
   Redirect,
 } from 'react-router-dom';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import Container from '@material-ui/core/Container';
 
 const Home = React.lazy(() => import('../pages/Home'));
@@ -13,9 +14,15 @@ const Join = React.lazy(() => import('../pages/Join'));
 const Room = React.lazy(() => import('../pages/Room'));
 
 function Content() {
+  const isMobile = useMediaQuery('(max-width:600px)');
+
   return (
     <Container
-      style={{ padding: '5vh 5vw calc(5vh + 60px)' }}
+      style={{
+        padding: `${
+          isMobile ? '5vh' : 'calc(5vh + 50px)'
+        }  5vw calc(5vh + 60px)`,
+      }}
       maxWidth={'lg'}
       disableGutters
     >
