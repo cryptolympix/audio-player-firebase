@@ -24,6 +24,7 @@ import CloseIcon from '@material-ui/icons/Close';
 interface Track {
   title: string;
   composer: string;
+  ref: string;
   url: string;
 }
 
@@ -97,14 +98,15 @@ export default function Room() {
    */
   useEffect(() => {
     // When reloading or exiting the page
-    window.addEventListener('beforeunload', (event) => {
+    window.addEventListener('beforeunload', () => {
       firebase
         .database()
         .ref(`rooms/${roomId}`)
         .child('users')
-        .set(activeUsers.filter((user) => user !== username));
+        .set(activeUsers.filter((user) => user !== username))
+        .catch(console.error);
     });
-  }, [activeUsers, roomId, username]);
+  }, [activeUsers, roomId, username, admin, isAdmin]);
 
   /**
    * Load the data of the room
@@ -127,16 +129,27 @@ export default function Room() {
               setUsername(data.admin);
               setUsernameSaved(true);
             }
-            setLoaded(true);
+            return data;
           }
         } else {
           throw new Error("The room desn' exist");
         }
       })
+      .then((data) => {
+        firebase
+          .database()
+          .ref(`rooms/${roomId}/users`)
+          .set(activeUsers.concat(data?.admin))
+          .then(() => {
+            setLoaded(true);
+          })
+          .catch(console.error);
+      })
       .catch((err) => {
         console.error(err.message);
         history.push('/');
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, history, isAdmin, location.state?.fromCreate]);
 
   /**
@@ -163,18 +176,13 @@ export default function Room() {
       .on('value', (snap) => {
         if (snap.exists()) {
           const data = snap.val();
-          firebase
-            .storage()
-            .ref(data.ref)
-            .getDownloadURL()
-            .then((url) => {
-              setActiveTrack({
-                composer: data.composer,
-                title: data.title,
-                url,
-              });
-              audio.src = url;
-            });
+          setActiveTrack({
+            composer: data.composer,
+            title: data.title,
+            ref: data.ref,
+            url: data.url,
+          });
+          audio.src = data.url;
         }
       });
   }, [roomId, isAdmin, audio]);
@@ -305,11 +313,36 @@ export default function Room() {
    */
   function skipTrack(a: number) {
     if (activeTrack) {
-      let index = tracks.indexOf(activeTrack);
+      let index = tracks.findIndex((track) => (track.ref = activeTrack.ref));
+      console.log(index);
       if (index > -1) {
         const next = tracks[Math.abs((index + a) % tracks.length)];
-        setActiveTrack(next);
+        firebase
+          .database()
+          .ref(`rooms/${roomId}`)
+          .child('currentTrack')
+          .set(next)
+          .then(() => {
+            setActiveTrack(next);
+          })
+          .catch(console.error);
       }
+    }
+  }
+
+  function selectTrack(track: Track) {
+    if (isAdmin && synchronized) {
+      firebase
+        .database()
+        .ref(`rooms/${roomId}`)
+        .child('currentTrack')
+        .set(track)
+        .then(() => {
+          if (track !== activeTrack) {
+            setActiveTrack(track);
+          }
+        })
+        .catch(console.error);
     }
   }
 
@@ -502,7 +535,7 @@ export default function Room() {
               <Button
                 key={`track-${i}`}
                 variant="text"
-                onClick={() => setActiveTrack(track)}
+                onClick={() => selectTrack(track)}
                 disabled={!isAdmin}
               >
                 <QueueMusicIcon />

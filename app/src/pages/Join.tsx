@@ -34,6 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function Join() {
   const classes = useStyles();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     listAllRooms();
@@ -55,6 +56,7 @@ export default function Join() {
     });
 
     setRooms(rooms.filter((room) => room.id !== 'test'));
+    setLoaded(true);
   }
 
   const roomList = () =>
@@ -83,6 +85,10 @@ export default function Join() {
         </CardActions>
       </Card>
     ));
+
+  if (!loaded) {
+    return <div />;
+  }
 
   return (
     <Grid container direction="column" justify="center">

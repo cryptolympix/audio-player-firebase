@@ -28,6 +28,7 @@ interface Track {
   composer: string;
   title: string;
   ref: string;
+  url?: string;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -104,14 +105,32 @@ export default function Create() {
               audioRef
                 .child(folder.name)
                 .listAll()
-                .then((res) => {
+                .then(async (res) => {
+                  const promises: Promise<void>[] = [];
+
                   res.items.forEach((item) => {
-                    tracks.push({
-                      title: item.name,
-                      composer: folder.name || 'Unknown',
-                      ref: `audio/${folder.name}/${item.name}`,
-                    });
+                    const ref = `audio/${folder.name}/${item.name}`;
+                    promises.push(
+                      new Promise((resolve, reject) => {
+                        firebase
+                          .storage()
+                          .ref(ref)
+                          .getDownloadURL()
+                          .then((url) => {
+                            tracks.push({
+                              title: item.name,
+                              composer: folder.name || 'Unknown',
+                              url,
+                              ref,
+                            });
+                            resolve();
+                          })
+                          .catch((err) => resolve(err));
+                      })
+                    );
                   });
+
+                  await Promise.all(promises);
                   resolve();
                 })
                 .catch(reject);
@@ -195,16 +214,17 @@ export default function Create() {
 
   function onToggleTrack(event: React.ChangeEvent<any>) {
     const ref = event.target.value;
-    const [, composer, title] = ref.split('/');
-    let formatTitle = title.replaceAll('_', ' ');
-    const index = formatTitle.lastIndexOf('.');
-    formatTitle = formatTitle.slice(0, index); // remove the extension
-    const track = { composer, title: formatTitle, ref };
-
-    if (event.target.checked) {
-      setSelectedTracks(selectedTracks.concat(track));
-    } else {
-      setSelectedTracks(selectedTracks.filter((t) => t.ref !== track.ref));
+    const track = storageTracks.find((t) => t.ref === ref);
+    if (track) {
+      if (event.target.checked) {
+        let formatTitle = track.title.replaceAll('_', ' ');
+        const index = formatTitle.lastIndexOf('.');
+        formatTitle = formatTitle.slice(0, index); // remove the extension
+        track.title = formatTitle;
+        setSelectedTracks(selectedTracks.concat(track));
+      } else {
+        setSelectedTracks(selectedTracks.filter((t) => t.ref !== track.ref));
+      }
     }
   }
 
@@ -298,7 +318,8 @@ export default function Create() {
                         return {
                           label,
                           formatTitle,
-                          ref: track.ref,
+                          ref: `audio/${track.composer}/${track.title}`,
+                          url: track.url,
                         };
                       })
                       .sort((data1, data2) => {
@@ -308,9 +329,9 @@ export default function Create() {
                           ? 1
                           : 0;
                       })
-                      .map((data) => (
+                      .map((data, i) => (
                         <FormControlLabel
-                          key={data.ref}
+                          key={`track-${i}`}
                           className={classes.track}
                           label={data.label}
                           control={
