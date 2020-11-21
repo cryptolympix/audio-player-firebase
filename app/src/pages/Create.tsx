@@ -7,7 +7,6 @@ import {
 } from '@material-ui/core/styles';
 import { v1 as uuidv1 } from 'uuid';
 import { useHistory } from 'react-router-dom';
-import crypto from 'crypto';
 import firebase from '../firebase';
 
 import Grid from '@material-ui/core/Grid';
@@ -77,10 +76,8 @@ export default function Create() {
 
   const [error, setError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<any>('');
-  const [roomSize, setRoomSize] = useState<any>('');
   const [roomAdmin, setRoomAdmin] = useState<any>('');
   const [roomNameError, setRoomNameError] = useState(false);
-  const [roomSizeError, setRoomSizeError] = useState(false);
   const [roomAdminError, setRoomAdminError] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [storageTracks, setStorageTracks] = useState<Track[]>([]);
@@ -91,7 +88,7 @@ export default function Create() {
   }, []);
 
   function listAudioTracksFromStorage() {
-    let audioRef = firebase.storage().ref().child('audio');
+    let audioRef = firebase.storage().ref('audio');
     audioRef
       .list()
       .then(async (res) => {
@@ -164,11 +161,6 @@ export default function Create() {
       hasError = true;
     }
 
-    if (!roomSize.match(/[0-5]{1}[0-9]?/)) {
-      setRoomSizeError(true);
-      hasError = true;
-    }
-
     if (
       !roomAdmin.match(
         /[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+/
@@ -186,7 +178,6 @@ export default function Create() {
         .doc(roomID)
         .set({
           name: roomName,
-          size: roomSize,
           admin: roomAdmin,
           createdAt: Date.now(),
           url: `${process.env.REACT_APP_PUBLIC_URL}/rooms/${roomID}`,
@@ -197,11 +188,7 @@ export default function Create() {
             .database()
             .ref(`rooms/${roomID}`)
             .set({
-              currentTrack: selectedTracks[0],
-              users: {
-                ['-' +
-                crypto.randomBytes(20).toString('hex').slice(0, 18)]: roomAdmin,
-              },
+              activeTrack: selectedTracks[0],
               state: 'pause',
               time: 0,
             })
@@ -234,7 +221,6 @@ export default function Create() {
 
   function clearErrors() {
     setRoomNameError(false);
-    setRoomSizeError(false);
     setRoomAdminError(false);
   }
 
@@ -284,21 +270,6 @@ export default function Create() {
                   value={roomName}
                   onChange={(event) => setRoomName(event.target.value)}
                   error={roomNameError}
-                />
-                <TextField
-                  className={classes.textfield}
-                  id="roomSize"
-                  label="Nombre de participants"
-                  required
-                  fullWidth
-                  type="number"
-                  margin="normal"
-                  inputProps={{ maxLength: 2 }}
-                  FormHelperTextProps={{ className: classes.helperText }}
-                  helperText="Doit contenir entre 2 et 59 participants"
-                  value={roomSize}
-                  onChange={(event) => setRoomSize(event.target.value)}
-                  error={roomSizeError}
                 />
                 <TextField
                   className={classes.textfield}

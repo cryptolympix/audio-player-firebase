@@ -1,4 +1,4 @@
-import React, { useEffect, useState, FormEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
@@ -14,8 +14,6 @@ import Alert from '@material-ui/lab/Alert';
 import Snackbar from '@material-ui/core/Snackbar';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import QueueMusicIcon from '@material-ui/icons/QueueMusic';
-import FormControl from '@material-ui/core/FormControl';
-import TextField from '@material-ui/core/TextField';
 import SyncIcon from '@material-ui/icons/Sync';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import ShareIcon from '@material-ui/icons/Share';
@@ -80,37 +78,12 @@ export default function Room() {
   const [alert, setAlert] = useState<SnackAlert | null>(null);
 
   const [name, setName] = useState('');
-  const [size, setSize] = useState(0);
   const [admin, setAdmin] = useState('');
-  const [activeUsers, setActiveUsers] = useState<string[]>([]);
-
-  const [username, setUsername] = useState('');
-  const [usernameSaved, setUsernameSaved] = useState(false);
-  const [usernameError, setUsernameError] = useState(false);
 
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [activeTrack, setActiveTrack] = useState<Track | null>();
-  const [audio, setAudio] = useState<HTMLAudioElement>(new Audio());
+  const [activeTrack, setActiveTrack] = useState<Track | null>(null);
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [time, setTime] = useState(0);
-
-  /**
-   * Disconnect the user when he exiting the page
-   */
-  useEffect(() => {
-    // When reloading or exiting the page
-    window.addEventListener('beforeunload', () => {
-      firebase
-        .database()
-        .ref(`rooms/${roomId}/users`)
-        .transaction(async (users) => {
-          await Object.entries(users).forEach(([key, value]) => {
-            if (value === username) delete users[key];
-          });
-          return users;
-        })
-        .catch(console.error);
-    });
-  }, [activeUsers, roomId, username, admin, isAdmin]);
 
   /**
    * Load the data of the room
@@ -126,56 +99,21 @@ export default function Room() {
           const data = snap.data();
           if (data) {
             setName(data.name);
-            setSize(data.size);
             setAdmin(data.admin);
             setTracks(data.tracks);
-            if (isAdmin && location.state?.fromCreate) {
-              setUsername(data.admin);
-              setUsernameSaved(true);
-              setLoaded(true);
-            } else if (isAdmin) {
-              firebase
-                .database()
-                .ref(`rooms/${roomId}/users`)
-                .transaction((users) => {
-                  if (users && !Object.values(users).includes(data.admin)) {
-                    users.push(data.admin);
-                  }
-                  return users;
-                })
-                .then(() => {
-                  setLoaded(true);
-                })
-                .catch(console.error);
-            }
+            setActiveTrack(data.tracks[0]);
+            setAudio(new Audio(data.tracks[0].url));
+            setLoaded(true);
           }
         } else {
           throw new Error("The room doesn't exist");
         }
       })
-      .then((data) => {
-        if (isAdmin && data) {
-        }
-      })
       .catch((err) => {
         console.error(err.message);
-        history.push('/');
+        setAlert({ msg: err.message, severity: 'error' });
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, history, isAdmin, location.state?.fromCreate]);
-
-  /**
-   * Synchronize the active users in the room
-   */
-  useEffect(() => {
-    firebase
-      .database()
-      .ref(`rooms/${roomId}/users`)
-      .on('value', (snap) => {
-        setActiveUsers(Object.values(snap.val() || []));
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId]);
 
   /**
    * Synchronize the audio source
@@ -198,22 +136,18 @@ export default function Room() {
               url: data.url,
             });
           }
-          audio.src = data.url;
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, isAdmin, audio, tracks]);
+  }, [roomId, isAdmin, tracks]);
 
   /**
    * Synchronize the state of the audio (playing or not)
    */
   useEffect(() => {
-    if (isAdmin || !synchronized) return;
-    firebase
-      .database()
-      .ref(`rooms/${roomId}/state`)
-      .on('value', (snapshot) => {
-        switch (snapshot.val()) {
+    function handleState(snap: firebase.database.DataSnapshot) {
+      if (audio) {
+        switch (snap.val()) {
           case 'play':
             if (audio.paused) audio.play();
             break;
@@ -221,51 +155,59 @@ export default function Room() {
             if (!audio.paused) audio.pause();
             break;
           default:
-            audio.pause();
+            if (!audio.paused) audio.pause();
             break;
         }
-      });
-  }, [roomId, isAdmin, audio, synchronized]);
+      }
+    }
+
+    const stateRef = firebase.database().ref(`rooms/${roomId}/state`);
+
+    if (!isAdmin && synchronized) {
+      stateRef.on('value', handleState);
+    }
+
+    return () => {
+      stateRef.off('value', handleState);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, isAdmin, synchronized, audio]);
 
   /**
    * Synchronized the audio time
    */
   useEffect(() => {
-    if (isAdmin || !synchronized) return;
-    firebase
-      .database()
-      .ref(`rooms/${roomId}/time`)
-      .on('value', (snapshot) => {
-        audio.currentTime = snapshot.val();
-      });
-  }, [roomId, isAdmin, audio, synchronized]);
+    function handleTime(snap: firebase.database.DataSnapshot) {
+      if (audio) {
+        setTime(snap.val());
+        audio.currentTime = snap.val();
+      }
+    }
+
+    const timeRef = firebase.database().ref(`rooms/${roomId}/time`);
+
+    if (!isAdmin && synchronized) {
+      timeRef.on('value', handleTime);
+    }
+
+    return () => {
+      timeRef.off('value', handleTime);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, isAdmin, synchronized, audio]);
 
   /**
    * Update the state of the audio
    * @param state
    */
   function onStateChange(state: 'play' | 'pause') {
-    if (synchronized) {
+    if (isAdmin && synchronized) {
       firebase
         .database()
         .ref(`rooms/${roomId}`)
-        .update({ state })
-        .catch(console.error);
-      firebase
-        .database()
-        .ref(`rooms/${roomId}`)
-        .update({ time })
+        .update({ state, time })
         .catch(console.error);
     }
-  }
-
-  // Set the audio instance of AudioPlayer to the state and update the current time
-  function onListen(event: any) {
-    if (!audio) {
-      const newAudio = event.target;
-      setAudio(newAudio);
-    }
-    setTime(event.target.currentTime);
   }
 
   function onToggleSync() {
@@ -281,47 +223,6 @@ export default function Room() {
   }
 
   /**
-   * When a user enter in the room, he must choose a username to be identified in the room
-   * @param event
-   */
-  function chooseUsername(event: FormEvent) {
-    event.preventDefault();
-
-    if (
-      username.match(
-        /[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+/
-      )
-    ) {
-      if (activeUsers.length < size) {
-        if (!activeUsers.includes(username)) {
-          firebase
-            .database()
-            .ref(`rooms/${roomId}/users`)
-            .push(username)
-            .then(() => {
-              setUsername(username);
-              setUsernameSaved(true);
-              setLoaded(true);
-            })
-            .catch(console.error);
-        } else {
-          setAlert({
-            msg: "Ce nom d'utilisateur est déjà utilisé",
-            severity: 'warning',
-          });
-        }
-      } else {
-        setAlert({
-          msg: 'La salle est pleine, vous ne pouvez plus rentrer...',
-          severity: 'warning',
-        });
-      }
-    } else {
-      setUsernameError(true);
-    }
-  }
-
-  /**
    * Skip the current to go to the previous track (-1), or the next track (1)
    * @param a -1 or 1
    */
@@ -333,7 +234,7 @@ export default function Room() {
         firebase
           .database()
           .ref(`rooms/${roomId}`)
-          .update({ currentTrack: next })
+          .update({ activeTrack: next })
           .then(() => {
             setActiveTrack(next);
           })
@@ -347,7 +248,7 @@ export default function Room() {
       firebase
         .database()
         .ref(`rooms/${roomId}`)
-        .update({ currentTrack: track })
+        .update({ activeTrack: track })
         .then(() => {
           if (track !== activeTrack) {
             setActiveTrack(track);
@@ -373,64 +274,18 @@ export default function Room() {
     }
   }
 
+  // Set the audio instance of AudioPlayer to the state and update the current time
+  function onListen(event: any) {
+    setTime(event.target.currentTime);
+  }
+
   function handleCloseAlert(event?: React.SyntheticEvent, reason?: string) {
     if (reason === 'clickaway') return;
     setAlert(null);
   }
 
-  if (!loaded && isAdmin) {
+  if (!loaded || !activeTrack) {
     return <div />;
-  }
-
-  if (!usernameSaved) {
-    return (
-      <ClickAwayListener onClickAway={() => setUsernameError(false)}>
-        <Grid container direction="column" justify="center">
-          <Typography variant="h3" component="h3">
-            Choisir un nom d'utilisateur pour la salle d'écoute
-          </Typography>
-          <form className={classes.form} onSubmit={chooseUsername} noValidate>
-            <FormControl component="fieldset" fullWidth>
-              <TextField
-                className={classes.textfield}
-                id="username"
-                label="Nom d'utilisateur"
-                required
-                fullWidth
-                autoFocus
-                type="text"
-                margin="normal"
-                inputProps={{ maxLength: 30 }}
-                FormHelperTextProps={{ className: classes.helperText }}
-                helperText="Doit contenir entre 1 et 30 lettres (caractères numériques non autorisés)"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                error={usernameError}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                className={classes.submit}
-              >
-                <Typography variant="button">Valider</Typography>
-              </Button>
-            </FormControl>
-          </form>
-          {alert !== null && (
-            <Snackbar
-              open={true}
-              autoHideDuration={6000}
-              onClose={handleCloseAlert}
-            >
-              <Alert onClose={handleCloseAlert} severity={alert.severity}>
-                <Typography variant="subtitle1">{alert.msg}</Typography>
-              </Alert>
-            </Snackbar>
-          )}
-        </Grid>
-      </ClickAwayListener>
-    );
   }
 
   return (
@@ -515,9 +370,8 @@ export default function Room() {
 
         <Grid container style={{ marginTop: '20px' }}>
           <AudioPlayer
-            src={activeTrack?.url}
+            src={activeTrack.url}
             autoPlayAfterSrcChange={false}
-            autoPlay={false}
             showDownloadProgress
             showSkipControls={!isMobile && isAdmin}
             listenInterval={500}
@@ -555,26 +409,6 @@ export default function Room() {
                   {track.composer} - {track.title}
                 </Typography>
               </Button>
-            ))}
-          </Grid>
-        </Grid>
-
-        <Grid
-          container
-          direction="column"
-          justify="center"
-          style={{ marginTop: '30px' }}
-        >
-          <Grid item>
-            <Typography variant="h5">
-              {activeUsers.length || 0} / {size} Participants
-            </Typography>
-          </Grid>
-          <Grid container direction="column" style={{ marginTop: '10px' }}>
-            {activeUsers.map((user, i) => (
-              <Typography key={`user-${i}`} variant="body2">
-                {user}
-              </Typography>
             ))}
           </Grid>
         </Grid>
