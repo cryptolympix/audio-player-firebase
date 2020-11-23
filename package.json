@@ -6,17 +6,10 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
-    "start": "cd app && yarn-or-npm run start",
-    "install": "yarn-or-npm run install:app && yarn-or-npm run install:func",
-    "install:app": "cd app && yarn-or-npm install",
-    "install:func": "cd functions && yarn-or-npm install",
-    "build:app": "cd app && yarn-or-npm run build",
-    "build:func": "cd functions && yarn-or-npm run build",
-    "deploy:hosting": "yarn-or-npm run build:app && firebase deploy --only hosting",
-    "deploy:functions": "yarn-or-npm run build:func && firebase deploy --only functions"
+    "start": "firebase emulators:start",
+    "deploy": "firebase deploy"
   },
   "devDependencies": {
-    "firebase-tools": "^8.16.2",
-    "yarn-or-npm": "^3.0.1"
+    "firebase-tools": "^8.16.2"
   }
 }

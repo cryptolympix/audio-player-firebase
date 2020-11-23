@@ -1,0 +1,26 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+:root {
+  --dark-bg-color: #26272b;
+  --light-bg-color: #737373;
+  --header-height: 80px;
+}
+
+.content {
+  padding: var(--header-height) 20px 20px 20px;
+  flex: 1 0 auto;
+}
+
+.btn:focus {
+  outline: thin dotted;
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
