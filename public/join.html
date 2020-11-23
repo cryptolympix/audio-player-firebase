@@ -3,10 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
     <meta name="google" content="notranslate" />
     <link rel="icon" href="/assets/images/logo.png" />
-    <title>Créer une salle d'écoute - Audio Player</title>
+    <title>Rejoindre une salle d'écoute - Audio Player</title>
 
     <!-- update the version number as needed -->
     <script defer src="/__/firebase/8.1.1/firebase-app.js"></script>
@@ -64,10 +63,10 @@
             <li class="nav-item">
               <a class="nav-link" href="/">Accueil</a>
             </li>
-            <li class="nav-item active">
+            <li class="nav-item">
               <a class="nav-link" href="/create.html">Créer</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item active">
               <a class="nav-link" href="/join.html">Rejoindre</a>
             </li>
           </ul>
@@ -87,73 +86,20 @@
       <div class="container mx-auto my-5 text-center">
         <div class="row">
           <div class="col">
-            <h1 class="h2">Créer une salle d'écoute</h1>
+            <h1 class="h2">Rejoindre une salle d'écoute</h1>
           </div>
         </div>
         <div class="row mt-5">
-          <div class="col mx-auto col-lg-6">
-            <form id="form-create">
-              <div class="form-group">
-                <label for="room-name">Nom de la salle</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="room-name"
-                  aria-describedby="room-name"
-                  required
-                  minlength="6"
-                  maxlength="50"
-                />
-                <small id="room-name-help" class="form-text text-muted"
-                  >Doit contenir entre 6 et 50 caractères (tous les caractères
-                  sont autorisés)</small
-                >
+          <div class="col">
+            <div id="rooms">
+              <div class="spinner-border text-secondary mx-auto" role="status">
+                <span class="sr-only">Loading...</span>
               </div>
-              <div class="form-group">
-                <label for="admin-name">Votre nom</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="admin-name"
-                  required
-                  minlength="1"
-                  maxlength="30"
-                  pattern="[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+"
-                />
-                <small id="admin-name-help" class="form-text text-muted"
-                  >Doit contenir entre 1 et 30 lettres (caractères numériques
-                  non autorisés)</small
-                >
-              </div>
-
-              <div class="form-group">
-                <h6 class="h5 text-center my-4">
-                  Quelles musiques voulez-vous utiliser ?
-                </h6>
-                <div
-                  id="tracklist"
-                  class="border border-dark rounded text-left"
-                >
-                  <div
-                    class="spinner-border text-secondary mx-auto"
-                    role="status"
-                  >
-                    <span class="sr-only">Loading...</span>
-                  </div>
-                </div>
-              </div>
-
-              <button type="submit" class="btn btn-block btn-primary mt-5">
-                Valider
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Alert -->
-    <div class="alert invisible" role="alert"></div>
 
     <!-- Site footer -->
     <footer id="footer">
@@ -230,6 +176,8 @@
       integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
       crossorigin="anonymous"
     ></script>
+    <!-- Clipoard.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
     <!-- Bundle -->
     <script src="/assets/js/app.js"></script>
   </body>

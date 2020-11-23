@@ -3,10 +3,38 @@ audio {
   outline: none;
 }
 
+.alert {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 50;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .alert {
+    max-width: 80vw;
+  }
+}
+
+@media (max-width: 992px) {
+  .alert {
+    max-width: 60vw;
+  }
+}
+
+@media (min-width: 992px) {
+  .alert {
+    max-width: 800px;
+  }
+}
+
 #tracklist {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 200px;
   overflow-y: scroll;
   padding: 10px;

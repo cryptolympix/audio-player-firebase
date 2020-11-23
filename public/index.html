@@ -14,12 +14,12 @@
     <script defer src="/__/firebase/8.1.1/firebase-auth.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-database.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-firestore.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-functions.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-messaging.js"></script>
+    <!-- <script defer src="/__/firebase/8.1.1/firebase-functions.js"></script>
+    <script defer src="/__/firebase/8.1.1/firebase-messaging.js"></script> -->
     <script defer src="/__/firebase/8.1.1/firebase-storage.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-analytics.js"></script>
+    <!-- <script defer src="/__/firebase/8.1.1/firebase-analytics.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-remote-config.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-performance.js"></script>
+    <script defer src="/__/firebase/8.1.1/firebase-performance.js"></script> -->
 
     <!-- Initialize Firebase -->
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
@@ -42,7 +42,23 @@
   <body>
     <header>
       <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
-        <a class="navbar-brand d-none d-sm-block" href="/">Audio Player</a>
+        <a class="navbar-brand d-none d-sm-block" href="/"
+          ><svg
+            width="20px"
+            height="20px"
+            viewBox="0 0 16 16"
+            class="bi bi-music-note-beamed"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13c0-1.104 1.12-2 2.5-2s2.5.896 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z"
+            />
+            <path fill-rule="evenodd" d="M14 11V2h1v9h-1zM6 3v10H5V3h1z" />
+            <path
+              d="M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4V2.905z"
+            /></svg
+        ></a>
         <div class="collapse navbar-collapse" id="navbarText">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
@@ -68,12 +84,16 @@
     </header>
 
     <div class="content">
-      <div class="container mx-auto my-5">
-        <h1 class="h1 text-center">Partage ta musique en temps réel</h1>
+      <div class="container mx-auto my-5 text-center">
+        <div class="row">
+          <div class="col">
+            <h1 class="h1">Partage ta musique en temps réel</h1>
+          </div>
+        </div>
         <div class="row my-5">
           <div class="col">
-            <h4 class="h4 text-center">Comment ça fonctionne ?</h4>
-            <p class="lead text-center mt-4">
+            <h4 class="h4">Comment ça fonctionne ?</h4>
+            <p class="lead mt-4">
               Créer une salle d'écoute en te rendant sur la page
               <a href="/create.html">ici</a>. Après avoir complété et validé le
               formulaire, ta salle est disponible et prête à l'emploi. Pour
@@ -87,6 +107,13 @@
             </p>
           </div>
         </div>
+        <div class="row my-5">
+          <div class="col">
+            <a type="button" class="btn btn-primary" href="/create.html">
+              Créer ma première salle d'écoute
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -97,7 +124,7 @@
           <div class="col-sm-12 col-md-6">
             <h6>À propos</h6>
             <p class="text-justify">
-              Partage ta musique en temps réels tout tout en gardant une qualité
+              Partage ta musique en temps réel tout tout en gardant une qualité
               d'écoute optimale. Et pour couronner le tout, ici c'est gratuit et
               sans inscription !
             </p>

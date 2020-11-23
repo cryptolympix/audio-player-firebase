@@ -13,12 +13,12 @@
     <script defer src="/__/firebase/8.1.1/firebase-auth.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-database.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-firestore.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-functions.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-messaging.js"></script>
+    <!-- <script defer src="/__/firebase/8.1.1/firebase-functions.js"></script>
+    <script defer src="/__/firebase/8.1.1/firebase-messaging.js"></script> -->
     <script defer src="/__/firebase/8.1.1/firebase-storage.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-analytics.js"></script>
+    <!-- <script defer src="/__/firebase/8.1.1/firebase-analytics.js"></script>
     <script defer src="/__/firebase/8.1.1/firebase-remote-config.js"></script>
-    <script defer src="/__/firebase/8.1.1/firebase-performance.js"></script>
+    <script defer src="/__/firebase/8.1.1/firebase-performance.js"></script> -->
 
     <!-- Initialize Firebase -->
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
@@ -41,7 +41,23 @@
   <body>
     <header>
       <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
-        <a class="navbar-brand d-none d-sm-block" href="/">Audio Player</a>
+        <a class="navbar-brand d-none d-sm-block" href="/"
+          ><svg
+            width="20px"
+            height="20px"
+            viewBox="0 0 16 16"
+            class="bi bi-music-note-beamed"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13c0-1.104 1.12-2 2.5-2s2.5.896 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z"
+            />
+            <path fill-rule="evenodd" d="M14 11V2h1v9h-1zM6 3v10H5V3h1z" />
+            <path
+              d="M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4V2.905z"
+            /></svg
+        ></a>
         <div class="collapse navbar-collapse" id="navbarText">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
@@ -67,15 +83,19 @@
     </header>
 
     <div class="content">
-      <div class="container mx-auto my-5">
-        <h1 class="h1 text-center">Formation Musicale</h1>
+      <div class="container mx-auto my-5 text-center">
         <div class="row">
-          <div class="col mt-5">
+          <div class="col">
+            <h1 id="room-name" class="h1"></h1>
+          </div>
+        </div>
+        <div class="row mt-5">
+          <div class="col">
             <audio controls id="audio-player" preload="true"></audio>
           </div>
         </div>
-        <div class="row">
-          <div class="col text-center mt-5">
+        <div class="row mt-5">
+          <div class="col">
             <div id="playlist">
               <h3 class="h3 mb-3">Playlist</h3>
               <ul id="playlist" class="form-group list-group mt-3">
@@ -89,8 +109,35 @@
             </div>
           </div>
         </div>
+        <div class="row mt-5">
+          <div class="col">
+            <button
+              id="clipboard-button"
+              type="button"
+              class="btn btn-primary"
+              style="width: 250px"
+            >
+              Copier le lien d'invitation
+            </button>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col">
+            <button
+              id="close-button"
+              type="button"
+              class="btn"
+              style="width: 250px"
+            >
+              Fermer la salle d'écoute
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- Alert -->
+    <div id="alert" class="alert invisible" role="alert"></div>
 
     <!-- Site footer -->
     <footer id="footer">
@@ -99,7 +146,7 @@
           <div class="col-sm-12 col-md-6">
             <h6>À propos</h6>
             <p class="text-justify">
-              Partage ta musique en temps réels tout tout en gardant une qualité
+              Partage ta musique en temps réel tout tout en gardant une qualité
               d'écoute optimale. Et pour couronner le tout, ici c'est gratuit et
               sans inscription !
             </p>
@@ -167,6 +214,8 @@
       integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
       crossorigin="anonymous"
     ></script>
+    <!-- Clipoard.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js"></script>
     <!-- Bundle -->
     <script src="/assets/js/app.js"></script>
   </body>

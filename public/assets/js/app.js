@@ -12,7 +12,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ROOM PAGE
       if (document.location.pathname === '/room.html') {
+        var isAdmin = getQuery('admin');
         loadRoom();
+
+        var clipboard = new ClipboardJS('#clipboard-button', {
+          text: () => {
+            return window.location.href.replace('&admin=true', '');
+          },
+        });
+
+        clipboard.on('success', () => {
+          createAlert('.alert', 'Lien copié dans le presse-papier', 'success');
+        });
+
+        var closeButton = document.querySelector('#close-button');
+        closeButton.classList.add(isAdmin ? 'btn-danger' : 'btn-secondary');
+        if (!isAdmin) {
+          closeButton.setAttribute('disabled', '');
+        }
+        closeButton.addEventListener('click', (event) => {
+          event.preventDefault();
+          closeRoom();
+        });
+      }
+
+      // JOIN PAGE
+      if (document.location.pathname === '/join.html') {
+        listRooms();
       }
     })
     .catch(console.error);
@@ -94,8 +120,6 @@ function loadTracks() {
         input.setAttribute('id', track.ref);
         input.setAttribute('value', JSON.stringify(track));
         input.setAttribute('name', track.ref);
-        // To unckeck the radio button
-        input.onclick = (event) => toggleCheck(event, track.ref);
 
         var label = document.createElement('label');
         label.classList.add('form-check-label');
@@ -103,18 +127,17 @@ function loadTracks() {
         label.style.cursor = 'pointer';
         label.style.userSelect = 'none';
         label.innerHTML = `<b>${track.composer}</b> - ${track.title}`;
-        // To unckeck the radio button
-        label.onclick = (event) => toggleCheck(event, track.ref);
 
         var div = document.createElement('div');
         div.classList.add('form-check');
         div.appendChild(input);
         div.appendChild(label);
+        // To unckeck the radio button
+        div.onclick = (event) => toggleCheck(event, track.ref);
 
         function toggleCheck(event, name) {
           event.preventDefault();
           var trackNode = document.getElementsByName(name)[0];
-          console.log(trackNode);
           var checked = trackNode.checked;
           trackNode.checked = !checked;
         }
@@ -150,29 +173,49 @@ function createRoom(event) {
       tracks: trackInfos,
     })
     .then(() => {
-      firebase
-        .database()
-        .ref(`rooms/${roomId}`)
-        .set({
-          activeTrack: trackInfos[0],
-          state: 'pause',
-          time: 0,
-        })
-        .then(() => {
-          const location = window.location;
-          const baseUrl = `${location.protocol}//${location.host}`;
-          location.assign(baseUrl + `/room.html?id=${roomId}&admin=true`);
-        })
-        .catch(console.error);
+      if (trackInfos.length > 0) {
+        firebase
+          .database()
+          .ref(`rooms/${roomId}`)
+          .set({
+            activeTrack: trackInfos[0],
+            state: 'pause',
+            time: 0,
+          })
+          .then(() => {
+            redirect(`/room.html?id=${roomId}&admin=true`);
+          })
+          .catch(console.error);
+      } else {
+        createAlert(
+          '.alert',
+          "Tu dois choisir au minimum une musique pour créer une salle d'écoute",
+          'warning'
+        );
+      }
     })
     .catch(console.error);
 }
 
-function loadRoom() {
-  const urlParams = new URLSearchParams(window.location.search);
+function closeRoom() {
+  var roomId = getQuery('id');
+  var isAdmin = getQuery('admin');
 
-  var roomId = urlParams.get('id');
-  var isAdmin = urlParams.get('admin');
+  if (isAdmin) {
+    firebase.database().ref(`rooms/${roomId}`).remove().catch(console.error);
+    firebase
+      .firestore()
+      .collection('rooms')
+      .doc(roomId)
+      .delete()
+      .catch(console.error);
+    redirect('/');
+  }
+}
+
+function loadRoom() {
+  var roomId = getQuery('id');
+  var isAdmin = getQuery('admin');
   var player = document.querySelector('#audio-player');
   var playlist = document.querySelector('#playlist');
 
@@ -199,7 +242,12 @@ function loadRoom() {
 
         var label = document.createElement('label');
         label.classList.add('form-check-label');
-        label.textContent = `${track.composer} - ${track.title}`;
+        label.innerHTML = `<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-music-note-list" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 13c0 1.105-1.12 2-2.5 2S7 14.105 7 13s1.12-2 2.5-2 2.5.895 2.5 2z"/>
+        <path fill-rule="evenodd" d="M12 3v10h-1V3h1z"/>
+        <path d="M11 2.82a1 1 0 0 1 .804-.98l3-.6A1 1 0 0 1 16 2.22V4l-5 1V2.82z"/>
+        <path fill-rule="evenodd" d="M0 11.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 .5 7H8a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 .5 3H8a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/>
+      </svg> ${track.composer} - ${track.title}`;
         label.setAttribute('for', track.ref);
 
         var div = document.createElement('div');
@@ -229,6 +277,7 @@ function loadRoom() {
         var tracks = room.tracks;
 
         if (roomName && roomAdmin && tracks) {
+          document.querySelector('#room-name').textContent = roomName;
           playlist.innerHTML = '<h3 class="h3 mb-3">Playlist</h3>';
           createPlaylist(tracks);
           initPlayer(tracks[0].url);
@@ -281,4 +330,73 @@ function loadRoom() {
       }
     })
     .catch(console.error);
+}
+
+async function listRooms() {
+  var rooms = document.querySelector('#rooms');
+  var snapshot = await firebase.firestore().collection('rooms').get();
+
+  rooms.innerHTML = '';
+
+  snapshot.forEach((doc) => {
+    var roomId = doc.id;
+    var data = doc.data();
+    if (data.name && data.admin) {
+      var a = document.createElement('a');
+      a.setAttribute('href', `/room.html?id=${roomId}`);
+      a.innerHTML = `<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-speaker-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-2.5 6.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
+      <path fill-rule="evenodd" d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm6 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 7a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>
+    </svg> <b>${data.name}</b> créée par <i>${data.admin}</i>`;
+
+      var li = document.createElement('li');
+      li.classList.add('list-group-item');
+      li.classList.add('border');
+      li.classList.add('m-2');
+      li.appendChild(a);
+
+      rooms.appendChild(li);
+    }
+  });
+
+  if (!rooms.hasChildNodes()) {
+    var li = document.createElement('li');
+    li.classList.add('list-group-item');
+    li.classList.add('border-0');
+    li.textContent = "Aucune salle d'écoute disponible";
+    rooms.appendChild(li);
+  }
+}
+
+function createAlert(id, msg, severity) {
+  var alert = document.querySelector(id);
+  alert.classList.remove('invisible');
+  alert.classList.add(
+    severity === 'success'
+      ? 'alert-success'
+      : severity === 'error'
+      ? 'alert-danger'
+      : severity === 'warning'
+      ? 'alert-warning'
+      : 'alert-info'
+  );
+  alert.textContent = msg;
+  setTimeout(() => {
+    alert.classList.remove('alert-success');
+    alert.classList.remove('alert-danger');
+    alert.classList.remove('alert-warning');
+    alert.classList.remove('alert-info');
+    alert.classList.add('invisible');
+  }, 5000);
+}
+
+function redirect(to) {
+  const location = window.location;
+  const baseUrl = `${location.protocol}//${location.host}`;
+  location.assign(baseUrl + to);
+}
+
+function getQuery(val) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(val);
 }
