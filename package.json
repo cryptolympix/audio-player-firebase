@@ -1,7 +1,7 @@
 {
-  "name": "music-player-sync-firebase",
+  "name": "audio-player-firebase",
   "version": "1.0.0",
-  "description": "An audio player to synchronize audio with many devices",
+  "description": "An application to share music in realtime",
   "author": "mxjoly <maxime.joly2808@gmail.com>",
   "license": "MIT",
   "keywords": [],

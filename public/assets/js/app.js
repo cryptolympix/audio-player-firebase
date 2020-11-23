@@ -197,13 +197,17 @@ function createRoom(event) {
     .catch(console.error);
 }
 
-function closeRoom() {
+async function closeRoom() {
   var roomId = getQuery('id');
   var isAdmin = getQuery('admin');
 
   if (isAdmin) {
-    firebase.database().ref(`rooms/${roomId}`).remove().catch(console.error);
-    firebase
+    await firebase
+      .database()
+      .ref(`rooms/${roomId}`)
+      .remove()
+      .catch(console.error);
+    await firebase
       .firestore()
       .collection('rooms')
       .doc(roomId)
