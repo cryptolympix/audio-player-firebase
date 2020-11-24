@@ -18,6 +18,8 @@ yarn start
 
 ## How it works ?
 
+Create a new room and invite some people to it by sharing the link by the clipboard button. Notive that the person which has created the room is the only one that could synchronize his audio player with the guests. He has also a special url with the id of the room followed by a url parameter admin set to true. The people who clicked on the shared link will be redirect to the room and wiil be synchronized with the audio player of the room's admin.
+
 ## Link to the web application
 
 https://audio-player-sync.firebaseapp.com

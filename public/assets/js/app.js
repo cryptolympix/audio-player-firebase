@@ -282,6 +282,10 @@ function loadRoom() {
 
         if (roomName && roomAdmin && tracks) {
           document.querySelector('#room-name').textContent = roomName;
+          document.querySelector('#active-track-composer').textContent =
+            tracks[0].composer;
+          document.querySelector('#active-track-title').textContent =
+            tracks[0].title;
           playlist.innerHTML = '<h3 class="h3 mb-3">Playlist</h3>';
           createPlaylist(tracks);
           initPlayer(tracks[0].url);
@@ -300,8 +304,13 @@ function loadRoom() {
             };
 
             player.onloadedmetadata = () => {
-              var track = document.querySelector('.form-check-input:checked');
-              roomRef.child('activeTrack').update(JSON.parse(track.value));
+              var input = document.querySelector('.form-check-input:checked');
+              var track = JSON.parse(input.value);
+              roomRef.child('activeTrack').update(track);
+              document.querySelector('#active-track-composer').textContent =
+                track.composer;
+              document.querySelector('#active-track-title').textContent =
+                track.title;
             };
             /**
              *  The other user are listening the database events
