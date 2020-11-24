@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="google" content="notranslate" />
+    <meta name="robots" content="noindex,nofollow" />
     <link rel="icon" href="/assets/images/logo.png" />
     <title>Salle d'écoute - Audio Player</title>
 
@@ -35,6 +36,13 @@
     <link href="/assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="/assets/css/brands.min.css" rel="stylesheet" />
     <link href="/assets/css/regular.min.css" rel="stylesheet" />
+    <link href="/assets/css/solid.min.css" rel="stylesheet" />
+
+    <!-- Material icons -->
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
 
     <!-- Styles -->
     <link rel="stylesheet" href="/assets/css/main.css" />
@@ -84,6 +92,17 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
+        <div>
+          <span id="sync-state" class="navbar-text small mr-1"></span>
+          <button
+            id="sync-button"
+            type="button"
+            class="btn btn-toggle"
+            data-toggle="button"
+          >
+            <span id="sync-icon" class="material-icons"></span>
+          </button>
+        </div>
       </nav>
     </header>
 
@@ -91,13 +110,14 @@
       <div class="container mx-auto my-5 text-center">
         <div class="row">
           <div class="col">
-            <h1 id="room-name" class="h1"></h1>
+            <h1 id="room-name" class="h1">&nbsp;</h1>
+            <p id="room-admin" class="small">&nbsp;</p>
           </div>
         </div>
         <div class="row mt-5">
           <div class="col">
-            <p id="active-track-composer" class="h5"></p>
-            <p id="active-track-title" class="small"></p>
+            <p id="active-track-composer" class="h5">&nbsp;</p>
+            <p id="active-track-title" class="small">&nbsp;</p>
           </div>
         </div>
         <div class="row mt-2">
@@ -109,8 +129,9 @@
           <div class="col">
             <div id="playlist">
               <h3 class="h3 mb-3">Playlist</h3>
-              <ul id="playlist" class="form-group list-group mt-3">
+              <ul class="form-group list-group mt-3">
                 <div
+                  id="playlist-spinner"
                   class="spinner-border text-secondary mx-auto"
                   role="status"
                 >
@@ -158,13 +179,13 @@
             <h6>À propos</h6>
             <p class="text-justify">
               Partage ta musique en temps réel tout tout en gardant une qualité
-              d'écoute optimale. Et pour couronner le tout, ici c'est gratuit et
+              d'écoute optimale. Et pour couronner le tout, c'est gratuit et
               sans inscription !
             </p>
           </div>
 
           <div class="col-xs-6 col-md-3">
-            <h6>Salle d'écoutes</h6>
+            <h6>Salle d'écoute</h6>
             <ul class="footer-links">
               <li><a href="/create.html">Créer</a></li>
               <li>
@@ -194,7 +215,9 @@
           <div class="col-md-8 col-sm-6 col-xs-12">
             <p class="copyright-text">
               Copyright &copy; 2020 All Rights Reserved by
-              <a href="https://github.com/mxjoly">Maxime Joly</a>
+              <a href="https://github.com/mxjoly" target="_blank"
+                >Maxime Joly</a
+              >
             </p>
           </div>
 
@@ -204,11 +227,15 @@
                 <a
                   class="facebook"
                   href="https://www.facebook.com/maxime.joly.129"
+                  target="_blank"
                   ><i class="fab fa-facebook"></i>
                 </a>
               </li>
               <li>
-                <a class="github" href="https://github.com/mxjoly"
+                <a
+                  class="github"
+                  href="https://github.com/mxjoly"
+                  target="_blank"
                   ><i class="fab fa-github"></i
                 ></a>
               </li>
@@ -216,6 +243,7 @@
                 <a
                   class="linkedin"
                   href="https://www.linkedin.com/in/maxime-joly-98288a154/"
+                  target="_blank"
                   ><i class="fab fa-linkedin"></i>
                 </a>
               </li>

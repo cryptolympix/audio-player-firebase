@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeButton.classList.add(isAdmin ? 'btn-danger' : 'btn-secondary');
         if (!isAdmin) {
           closeButton.setAttribute('disabled', '');
+          closeButton.style.cursor = 'not-allowed';
         }
         closeButton.addEventListener('click', (event) => {
           event.preventDefault();
@@ -132,8 +133,7 @@ function loadTracks() {
         div.classList.add('form-check');
         div.appendChild(input);
         div.appendChild(label);
-        // To unckeck the radio button
-        div.onclick = (event) => toggleCheck(event, track.ref);
+        div.onclick = (event) => toggleCheck(event, track.ref); // To unckeck the radio button
 
         function toggleCheck(event, name) {
           event.preventDefault();
@@ -223,6 +223,37 @@ function loadRoom() {
   var player = document.querySelector('#audio-player');
   var playlist = document.querySelector('#playlist');
 
+  function initElements(room, tracks) {
+    var roomName = document.querySelector('#room-name');
+    var roomAdmin = document.querySelector('#room-admin');
+    var trackComposer = document.querySelector('#active-track-composer');
+    var trackTitle = document.querySelector('#active-track-title');
+    var spinner = document.querySelector('#playlist-spinner');
+    var syncButton = document.querySelector('#sync-button');
+    var syncIcon = document.querySelector('#sync-icon');
+    var syncState = document.querySelector('#sync-state');
+
+    roomName.textContent = room.name;
+    roomAdmin.textContent = `créée par ${room.admin}`;
+    trackComposer.textContent = tracks[0].composer;
+    trackTitle.textContent = tracks[0].title;
+    spinner.remove();
+
+    syncIcon.textContent = isAdmin ? 'sync' : 'sync_disabled';
+    syncState.textContent = isAdmin
+      ? 'Synchronisation activée'
+      : 'Synchronisation désactivée';
+    if (isAdmin) syncButton.classList.add('active');
+
+    syncButton.addEventListener('click', () => {
+      const isActive = syncButton.classList.contains('active');
+      syncIcon.textContent = isActive ? 'sync_disabled' : 'sync';
+      syncState.textContent = isActive
+        ? 'Synchronisation désactivée'
+        : 'Synchronisation activée';
+    });
+  }
+
   function initPlayer(url) {
     player.preload = 'auto';
     player.src = url;
@@ -281,58 +312,68 @@ function loadRoom() {
         var tracks = room.tracks;
 
         if (roomName && roomAdmin && tracks) {
-          document.querySelector('#room-name').textContent = roomName;
-          document.querySelector('#active-track-composer').textContent =
-            tracks[0].composer;
-          document.querySelector('#active-track-title').textContent =
-            tracks[0].title;
-          playlist.innerHTML = '<h3 class="h3 mb-3">Playlist</h3>';
+          initElements(room, tracks);
           createPlaylist(tracks);
           initPlayer(tracks[0].url);
 
           var roomRef = firebase.database().ref(`rooms/${roomId}`);
 
+          var isSync = () =>
+            document.querySelector('#sync-button').classList.contains('active');
+
+          player.onloadedmetadata = () => {
+            var input = document.querySelector('.form-check-input:checked');
+            var track = JSON.parse(input.value);
+            roomRef.child('activeTrack').update(track);
+            document.querySelector('#active-track-composer').textContent =
+              track.composer;
+            document.querySelector('#active-track-title').textContent =
+              track.title;
+          };
+
           /**
            * The admin emit the event wy updating the database
            */
           if (isAdmin) {
-            player.onplay = () => roomRef.update({ state: 'play' });
-            player.onpause = () => roomRef.update({ state: 'pause' });
+            player.onplay = () => {
+              if (isSync()) roomRef.update({ state: 'play' });
+            };
+
+            player.onpause = () => {
+              if (isSync()) roomRef.update({ state: 'pause' });
+            };
 
             player.onseeking = (event) => {
-              roomRef.update({ time: event.target.currentTime });
+              if (isSync()) roomRef.update({ time: event.target.currentTime });
             };
 
-            player.onloadedmetadata = () => {
-              var input = document.querySelector('.form-check-input:checked');
-              var track = JSON.parse(input.value);
-              roomRef.child('activeTrack').update(track);
-              document.querySelector('#active-track-composer').textContent =
-                track.composer;
-              document.querySelector('#active-track-title').textContent =
-                track.title;
-            };
             /**
              *  The other user are listening the database events
              */
           } else {
             roomRef.child('state').on('value', (snap) => {
-              if (snap.val() == 'play') {
-                player.play();
-              } else {
-                player.pause();
+              if (isSync()) {
+                if (snap.val() == 'play') {
+                  player.play();
+                } else {
+                  player.pause();
+                }
               }
             });
 
             roomRef.child('time').on('value', (snap) => {
-              player.currentTime = snap.val();
+              if (isSync()) player.currentTime = snap.val();
             });
 
             roomRef.child('activeTrack').on('value', (snap) => {
-              var track = snap.val();
-              player.src = track.url;
-              document.querySelector('input:checked').checked = false;
-              document.querySelector(`input[id="${track.ref}"]`).checked = true;
+              if (isSync()) {
+                var track = snap.val();
+                player.src = track.url;
+                document.querySelector('input:checked').checked = false;
+                document.querySelector(
+                  `input[id="${track.ref}"]`
+                ).checked = true;
+              }
             });
           }
         } else {
@@ -349,7 +390,7 @@ async function listRooms() {
   var rooms = document.querySelector('#rooms');
   var snapshot = await firebase.firestore().collection('rooms').get();
 
-  rooms.innerHTML = '';
+  document.querySelector('#rooms').innerHTML = '';
 
   snapshot.forEach((doc) => {
     var roomId = doc.id;
@@ -367,10 +408,11 @@ async function listRooms() {
       li.classList.add('border');
       li.classList.add('m-2');
       li.appendChild(a);
-
       rooms.appendChild(li);
     }
   });
+
+  console.log(rooms.hasChildNodes());
 
   if (!rooms.hasChildNodes()) {
     var li = document.createElement('li');
