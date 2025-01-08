@@ -22,10 +22,6 @@ Create a new room and invite some people to it by sharing the link by the clipbo
 
 The people who clicked on the shared link will be redirect to the room. To be synchronized with the room's admin, they have to activate the synchronization with the button at the top bar.
 
-## Link to the web application
-
-https://audio-player-sync.firebaseapp.com
-
 ## Licence
 
 [MIT.](https://github.com/mxjoly/audio-player-firebase/blob/master/LICENSE)
